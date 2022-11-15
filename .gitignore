@@ -1,0 +1,6 @@
+data/*
+logs/*
+infos/*
+__pycache__/
+
+/test_email.py
