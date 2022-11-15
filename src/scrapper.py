@@ -9,11 +9,9 @@ BIOGRAPHY = 'infobox biography vcard'
 class WikiScrapper:
 	def __init__(self, jFilePath, error_log=""):
 		try:
-			jFile = open(jFilePath)
+			jFile = open(jFilePath, 'r')
 			self.persons = json.load(jFile)
-			self.correctly_loaded = True
 		except:
-			self.correctly_loaded = False
 			print("JSON not correctly loaded. Check existence and conformity")
 			return
 
@@ -23,9 +21,16 @@ class WikiScrapper:
 			self.error_log = "error_log.log"
 
 		self.browser = msoup.StatefulBrowser()
+		self.freshly_dead = {}
 
-	def check(self):
-		return self.correctly_loaded
+	@classmethod
+	def process(cls, jFilePath, error_log=""):
+		try:
+			scrapper = cls(jFilePath, error_log)
+			scrapper.areDead()
+			scrapper.alert()
+		except:
+			return
 
 	def isDead(self, browser, name):
 		errors = ""
@@ -46,15 +51,25 @@ class WikiScrapper:
 		is_dead = any(["died" in str(row).lower() for row in infos])
 		return is_dead, errors
 
-	def process(self):
+	def areDead(self):
 		results = {name:self.isDead(self.browser, infos['key']) 
 				   for name, infos in self.persons.items()}
 
+		# changes
+		self.freshly_dead = {name:True 
+			for name, is_dead in results.items()
+			if is_dead != self.persons[name]["dead"]}
+
 		# update JSON
-		[self.persons[name].update({'dead':is_dead}) 
+		[self.persons[name].update({'dead':is_dead[0]}) 
 			for name, is_dead in results.items()]
+		with open("persons.json", 'w') as jFile:
+			json.dump(self.persons, jFile, indent=6)
 
 		# write log
 		with open(self.error_log, 'w') as log:
 			[log.write("> "+res[1]+"\n") for res in results.values()
 				if len(res[1])>0]
+
+	def alert(self):
+		pass
