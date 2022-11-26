@@ -70,8 +70,8 @@ class WikiScrapper:
 								if is_dead != self.persons[name]["dead"]]
 
 		# update JSON
-		# [self.persons[name].update({'dead':is_dead}) 
-		# 	for name, (is_dead, _) in results.items()]
+		[self.persons[name].update({'dead':is_dead}) 
+			for name, (is_dead, _) in results.items()]
 
 		with open(self.jFilePath, 'w+') as jFile:
 			json.dump(self.persons, jFile, indent=6)
@@ -95,3 +95,4 @@ class WikiScrapper:
 			self.mailer.set_content(mailfrom, mailto, subject, body)
 			send_status.append(self.mailer.send())
 		return "error: load" not in load_status and "error: send" not in send_status
+		

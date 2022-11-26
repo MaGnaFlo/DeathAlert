@@ -62,4 +62,6 @@ class Mailer:
 			return "error: send"
 		finally:
 			session.quit()
+			if self.verbose:
+				print("Success!")
 			return "success"
