@@ -10,7 +10,7 @@ BIOGRAPHY = 'infobox biography vcard'
 
 """ Simple scrapper to get relevant info to alert about a person's death. """
 class WikiScrapper:
-	def __init__(self, jFilePath, credentials_path, error_log=""):
+	def __init__(self, jFilePath, mailer, error_log=""):
 		try:
 			self.jFilePath = jFilePath
 			jFile = open(jFilePath, 'r')
@@ -24,7 +24,7 @@ class WikiScrapper:
 		else:
 			self.error_log = "error_log.log"
 
-		self.mailer = Mailer(credentials_path)
+		self.mailer = mailer
 		self.browser = msoup.StatefulBrowser()
 		self.freshly_dead = {}
 
@@ -92,7 +92,7 @@ class WikiScrapper:
 			body = f"! DEATHALERT INFO !\n{name} has died!"
 
 			load_status.append(self.mailer.load())
-			self.mailer.set_content(mailfrom, mailto, subject, body)
-			send_status.append(self.mailer.send())
+			content = self.mailer.set_content(mailfrom, mailto, subject, body)
+			send_status.append(self.mailer.send(content))
 		return "error: load" not in load_status and "error: send" not in send_status
 		
