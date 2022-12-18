@@ -34,7 +34,7 @@ class Mailer:
 		except:
 			return "error: info"
 
-	""" Format the mail to send. """
+	""" Formats the mail to send. """
 	def set_content(self, mailfrom="", mailto="", subject="", body=""):
 		msg = MIMEMultipart()
 		msg['From'] = mailfrom if mailfrom != "" else self.sender
@@ -46,7 +46,7 @@ class Mailer:
 
 	""" Sends the mail. """
 	def send(self, sender, receiver, subject, body):
-		self.set_content(sender, receiver, subject, body)
+		self.set_content(mailfrom=sender, mailto=receiver, subject=subject, body=body)
 
 		session = smtplib.SMTP(self.smtp, self.port)
 		session.starttls()
@@ -62,7 +62,7 @@ class Mailer:
 		if self.verbose:
 			print('Sending mail...')
 		try:
-			session.sendmail(self.sender, receiver, self.content)
+			session.sendmail(sender, receiver, self.content)
 		except:
 			return "error: send"
 		finally:

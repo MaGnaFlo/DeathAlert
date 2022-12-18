@@ -10,15 +10,8 @@ BIOGRAPHY = 'infobox biography vcard'
 
 """ Simple scrapper to get relevant info to alert about a person's death. """
 class WikiScrapper:
-	def __init__(self, jFilePath, mailer, error_log=""):
-		try:
-			self.jFilePath = jFilePath
-			jFile = open(jFilePath, 'r')
-			self.persons = json.load(jFile)
-		except:
-			print("JSON not correctly loaded. Check existence and conformity")
-			return
-
+	def __init__(self, jObj, mailer, error_log=""):
+		self.jObj = jObj
 		if exists(error_log):
 			self.error_log = error_log
 		else:
@@ -30,9 +23,9 @@ class WikiScrapper:
 
 	""" Launches directly the scrap. """
 	@classmethod
-	def process(cls, jFilePath, credentials_path, error_log=""):
+	def process(cls, jObj, mailer, error_log=""):
 		try:
-			scrapper = cls(jFilePath, credentials_path, error_log)
+			scrapper = cls(jObj, mailer, error_log)
 			scrapper.areDead()
 			success = scrapper.alert()
 			if not success:
@@ -64,17 +57,14 @@ class WikiScrapper:
 	""" Checks the death of a list of persons. """
 	def areDead(self):
 		results = {name:self.isDead(self.browser, infos['key']) 
-				   for name, infos in self.persons.items()}
+				   for name, infos in self.jObj.persons.items()}
 		# changes
 		self.freshly_dead = [name for name, (is_dead, _) in results.items()
-								if is_dead != self.persons[name]["dead"]]
+								if is_dead != self.jObj.persons[name]["dead"]
+								and is_dead is not None]
 
 		# update JSON
-		[self.persons[name].update({'dead':is_dead}) 
-			for name, (is_dead, _) in results.items()]
-
-		with open(self.jFilePath, 'w+') as jFile:
-			json.dump(self.persons, jFile, indent=6)
+		[self.jObj.update(name, is_dead) for name, (is_dead, _) in results.items()]
 
 		# write log
 		with open(self.error_log, 'w') as log:
@@ -87,12 +77,9 @@ class WikiScrapper:
 		send_status = []
 		for name in self.freshly_dead:
 			mailfrom = "DEATH ALERT"
-			mailto = ""
+			mailto = "melchior.myrrha@gmail.com"
 			subject = f"{name} has died!"
 			body = f"! DEATHALERT INFO !\n{name} has died!"
-
-			load_status.append(self.mailer.load())
-			content = self.mailer.set_content(mailfrom, mailto, subject, body)
-			send_status.append(self.mailer.send(content))
+			send_status.append(self.mailer.send(mailfrom, mailto, subject, body))
 		return "error: load" not in load_status and "error: send" not in send_status
 		
